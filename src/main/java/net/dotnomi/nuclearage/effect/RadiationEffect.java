@@ -1,7 +1,5 @@
 package net.dotnomi.nuclearage.effect;
 
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,10 +14,10 @@ public class RadiationEffect extends MobEffect {
     @Override
     public void applyEffectTick(@NotNull LivingEntity pLivingEntity, int pAmplifier) {
         int amplifier = Math.min(Math.max(pAmplifier, 0), 2);
+        ((Player)pLivingEntity).causeFoodExhaustion(0.005F * (float)(amplifier + 1));
 
         if (pLivingEntity.getHealth() > 1.0F) {
             pLivingEntity.hurt(pLivingEntity.damageSources().magic(),(amplifier + (float) 1) / 4);
-            ((Player)pLivingEntity).causeFoodExhaustion(0.005F * (float)(amplifier + 2));
         }
     }
 
