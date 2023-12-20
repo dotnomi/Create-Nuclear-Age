@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "nuclearage:block/radiorite_block"
+    }
+  }
+}
