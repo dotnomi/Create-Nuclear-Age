@@ -1,11 +1,15 @@
 {
   "item.nuclearage.graphite": "Graphit",
   "item.nuclearage.compressed_coal": "Komprimierte Kohle",
-  "creativetab.nuclear_age_tab": "Create: Nukleares Zeitalter",
+
   "block.nuclearage.radiocalcite_block": "Radiokalzit",
   "block.nuclearage.radionite_block": "Radionit",
   "block.nuclearage.radiorite_block": "Radiorit",
   "block.nuclearage.radioschist_block": "Radioschiefrit",
   "block.nuclearage.radiosite_block": "Radiosit",
-  "block.nuclearage.radiotuffite_block": "Radiotuffit"
+  "block.nuclearage.radiotuffite_block": "Radiotuffit",
+
+  "creativetab.nuclear_age_tab": "Create: Nukleares Zeitalter",
+
+  "effect.nuclearage.radiation": "Strahlung"
 }

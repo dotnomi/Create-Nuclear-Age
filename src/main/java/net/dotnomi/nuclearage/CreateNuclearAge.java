@@ -2,6 +2,7 @@ package net.dotnomi.nuclearage;
 
 import com.mojang.logging.LogUtils;
 import net.dotnomi.nuclearage.block.ModBlocks;
+import net.dotnomi.nuclearage.effect.ModEffects;
 import net.dotnomi.nuclearage.item.ModCreativeModeTabs;
 import net.dotnomi.nuclearage.item.ModItems;
 import net.minecraft.world.item.CreativeModeTab;
@@ -32,6 +33,7 @@ public class CreateNuclearAge
         ModCreativeModeTabs.register(modEventBus);
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
+        ModEffects.register(modEventBus);
 
         modEventBus.addListener(this::commonSetup);
 
