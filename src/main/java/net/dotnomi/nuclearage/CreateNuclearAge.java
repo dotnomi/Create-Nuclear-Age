@@ -3,6 +3,7 @@ package net.dotnomi.nuclearage;
 import com.mojang.logging.LogUtils;
 import net.dotnomi.nuclearage.block.ModBlocks;
 import net.dotnomi.nuclearage.effect.ModEffects;
+import net.dotnomi.nuclearage.event.ModEvents;
 import net.dotnomi.nuclearage.item.ModCreativeModeTabs;
 import net.dotnomi.nuclearage.item.ModItems;
 import net.minecraft.world.item.CreativeModeTab;
@@ -20,6 +21,9 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
+
+// Textures: Farbton -47, Sättigung 100, Helligkeit 0 GOLD
+
 @Mod(CreateNuclearAge.MOD_ID)
 public class CreateNuclearAge
 {
@@ -38,6 +42,7 @@ public class CreateNuclearAge
         modEventBus.addListener(this::commonSetup);
 
         MinecraftForge.EVENT_BUS.register(this);
+
         modEventBus.addListener(this::addCreative);
     }
 
@@ -59,7 +64,7 @@ public class CreateNuclearAge
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event)
     {
-
+        MinecraftForge.EVENT_BUS.register(new ModEvents());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent

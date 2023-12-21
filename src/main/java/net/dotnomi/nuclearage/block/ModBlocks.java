@@ -12,6 +12,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 public class ModBlocks {
@@ -49,5 +50,16 @@ public class ModBlocks {
 
     public static void register(IEventBus eventBus) {
         BLOCKS.register(eventBus);
+    }
+
+    public static List<Block> getLevelOneRadiationBlocks() {
+        return List.of(
+                RADIOCALCITE_BLOCK.get(),
+                RADIONITE_BLOCK.get(),
+                RADIORITE_BLOCK.get(),
+                RADIOSCHIST_BLOCK.get(),
+                RADIOSITE_BLOCK.get(),
+                RADIOTUFFITE_BLOCK.get()
+        );
     }
 }
