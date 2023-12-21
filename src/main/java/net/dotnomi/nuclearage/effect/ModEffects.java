@@ -13,7 +13,7 @@ public class ModEffects {
             DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, CreateNuclearAge.MOD_ID);
 
     public static final RegistryObject<MobEffect> RADIATION = MOB_EFFECTS.register("radiation",
-            () -> new RadiationEffect(MobEffectCategory.HARMFUL, 8634928));
+            () -> new RadiationEffect(MobEffectCategory.HARMFUL, 11736676));
 
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
