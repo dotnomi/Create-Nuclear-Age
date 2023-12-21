@@ -4,6 +4,7 @@ import net.dotnomi.nuclearage.CreateNuclearAge;
 import net.dotnomi.nuclearage.item.ModItems;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -60,6 +61,17 @@ public class ModBlocks {
                 RADIOSCHIST_BLOCK.get(),
                 RADIOSITE_BLOCK.get(),
                 RADIOTUFFITE_BLOCK.get()
+        );
+    }
+
+    public static List<Item> getLevelOneRadiationBlockItems() {
+        return List.of(
+                RADIOCALCITE_BLOCK.get().asItem(),
+                RADIONITE_BLOCK.get().asItem(),
+                RADIORITE_BLOCK.get().asItem(),
+                RADIOSCHIST_BLOCK.get().asItem(),
+                RADIOSITE_BLOCK.get().asItem(),
+                RADIOTUFFITE_BLOCK.get().asItem()
         );
     }
 }
