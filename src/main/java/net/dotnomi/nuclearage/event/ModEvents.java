@@ -4,7 +4,6 @@ import net.dotnomi.nuclearage.CreateNuclearAge;
 import net.dotnomi.nuclearage.block.ModBlocks;
 import net.dotnomi.nuclearage.effect.ModEffects;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
