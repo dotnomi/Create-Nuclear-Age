@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -30,6 +32,10 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import java.util.List;
 
+/*
+ * TODO: Item Container on Ground Bug - forever radiation
+ */
+
 public class ModEvents {
 
     @Mod.EventBusSubscriber(modid = CreateNuclearAge.MOD_ID)
@@ -40,10 +46,67 @@ public class ModEvents {
             List<ServerPlayer> players = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
 
             for (ServerPlayer player: players) {
-                if (isNearRadioactiveBlock(player, player.level())) {
-                    player.addEffect(new MobEffectInstance(ModEffects.RADIATION.get(), 5, 2));
+                if (hasRadioavtiveItemsInInventory(player)
+                        || isNearRadiactiveItem(player, player.level())
+                        || isNearRadioactiveBlock(player, player.level())
+                        || isNearRadioactiveContainer(player, player.level())
+                ) {
+                    player.addEffect(new MobEffectInstance(ModEffects.RADIATION.get(), 5, 0));
                 }
             }
+        }
+
+        private static boolean hasRadioavtiveItemsInInventory(Player player) {
+            for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                ItemStack itemStack = player.getInventory().getItem(i);
+                if (hasRadioavtiveItemContainersInInventory(itemStack) || isItemRadiactive(itemStack)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static boolean hasRadioavtiveItemContainersInInventory(ItemStack itemStack) {
+            LazyOptional<IItemHandler> itemHandlerOptional = itemStack.getCapability(CapabilityManager.get(new CapabilityToken<>() {}));
+
+            if (itemHandlerOptional.isPresent()) {
+                IItemHandler itemHandler = itemHandlerOptional.orElse(null);
+                if (itemHandler != null) {
+                    for (int i = 0; i < itemHandler.getSlots(); i++) {
+                        if (isItemRadiactive(itemHandler.getStackInSlot(i))) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static boolean isNearRadiactiveItem(Entity entity, Level world) {
+            BlockPos entityPosition = new BlockPos(entity.getOnPos());
+            int radius = 12;
+
+            List<ItemEntity> itemEntities = world.getEntitiesOfClass(ItemEntity.class, new AABB(
+                    entityPosition.offset(-radius, -radius, -radius),
+                    entityPosition.offset(radius, radius, radius)
+            ));
+
+            for (ItemEntity itemEntity : itemEntities) {
+                ItemStack itemStack = itemEntity.getItem();
+
+                if (hasRadioavtiveItemContainersInInventory(itemStack) || isItemRadiactive(itemStack)) {
+                    List<Block> excludedBlocks = List.of(
+                            Blocks.AIR
+                    );
+
+                    if (!isShieldedFromRadiation(entity, world, itemEntity.blockPosition(), excludedBlocks)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         private static boolean isNearRadioactiveBlock(Entity entity, Level world) {
@@ -63,6 +126,18 @@ public class ModEvents {
                         return true;
                     }
                 }
+            }
+            return false;
+        }
+
+        private static boolean isNearRadioactiveContainer(Entity entity, Level world) {
+            BlockPos entityPosition = new BlockPos(entity.getOnPos());
+            int radius = 12;
+
+            for (BlockPos blockPosition : BlockPos.betweenClosed(
+                    entityPosition.offset(-radius, -radius, -radius),
+                    entityPosition.offset(radius, radius, radius))) {
+                BlockEntity blockEntity = world.getBlockEntity(blockPosition);
 
                 if (blockEntity != null) {
                     LazyOptional<IItemHandler> itemHandlerOptional = blockEntity.getCapability(CapabilityManager.get(new CapabilityToken<>() {}));
