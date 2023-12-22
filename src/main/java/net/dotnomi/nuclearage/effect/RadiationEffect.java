@@ -14,11 +14,9 @@ public class RadiationEffect extends MobEffect {
     @Override
     public void applyEffectTick(@NotNull LivingEntity pLivingEntity, int pAmplifier) {
         int amplifier = Math.min(Math.max(pAmplifier, 0), 2);
-        ((Player)pLivingEntity).causeFoodExhaustion(0.005F * (float)(amplifier + 1));
 
-        if (pLivingEntity.getHealth() > 1.0F) {
-            pLivingEntity.hurt(pLivingEntity.damageSources().magic(),(amplifier + (float) 1) / 4);
-        }
+        if (pLivingEntity instanceof Player player) player.causeFoodExhaustion(0.005F * (float)(amplifier + 1));
+        if (pLivingEntity.getHealth() > 1.0F) pLivingEntity.hurt(pLivingEntity.damageSources().magic(),(amplifier + (float) 1) / 4);
     }
 
     @Override

@@ -1,13 +1,19 @@
 {
   "item.nuclearage.graphite": "Graphite",
   "item.nuclearage.compressed_coal": "Compressed Coal",
+  "item.nuclearage.radiocalcite":  "Radiocalcite",
+  "item.nuclearage.radionite":  "Radionite",
+  "item.nuclearage.radiorite":  "Radiorite",
+  "item.nuclearage.radioschist":  "Radioschist",
+  "item.nuclearage.radiosite":  "Radiosite",
+  "item.nuclearage.radiotuffite":  "Radiotuffite",
 
-  "block.nuclearage.radiocalcite_block":  "Radiocalcite",
-  "block.nuclearage.radionite_block":  "Radionite",
-  "block.nuclearage.radiorite_block":  "Radiorite",
-  "block.nuclearage.radioschist_block":  "Radioschist",
-  "block.nuclearage.radiosite_block":  "Radiosite",
-  "block.nuclearage.radiotuffite_block":  "Radiotuffite",
+  "block.nuclearage.radiocalcite_block":  "Radiocalcite Block",
+  "block.nuclearage.radionite_block":  "Radionite Block",
+  "block.nuclearage.radiorite_block":  "Radiorite Block",
+  "block.nuclearage.radioschist_block":  "Radioschist Block",
+  "block.nuclearage.radiosite_block":  "Radiosite Block",
+  "block.nuclearage.radiotuffite_block":  "Radiotuffite Block",
 
   "creativetab.nuclear_age_tab": "Create: Nuclear Age",
 

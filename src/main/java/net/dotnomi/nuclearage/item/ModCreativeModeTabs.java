@@ -23,11 +23,17 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.COMPRESSED_COAL.get());
 
                         pOutput.accept(ModBlocks.RADIOCALCITE_BLOCK.get());
+                        pOutput.accept(ModItems.RADIOCALCITE.get());
                         pOutput.accept(ModBlocks.RADIONITE_BLOCK.get());
+                        pOutput.accept(ModItems.RADIONITE.get());
                         pOutput.accept(ModBlocks.RADIORITE_BLOCK.get());
+                        pOutput.accept(ModItems.RADIORITE.get());
                         pOutput.accept(ModBlocks.RADIOSCHIST_BLOCK.get());
+                        pOutput.accept(ModItems.RADIOSCHIST.get());
                         pOutput.accept(ModBlocks.RADIOSITE_BLOCK.get());
+                        pOutput.accept(ModItems.RADIOSITE.get());
                         pOutput.accept(ModBlocks.RADIOTUFFITE_BLOCK.get());
+                        pOutput.accept(ModItems.RADIOTUFFITE.get());
                     })
                     .build());
 

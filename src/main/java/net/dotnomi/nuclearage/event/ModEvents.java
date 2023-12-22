@@ -3,14 +3,16 @@ package net.dotnomi.nuclearage.event;
 import net.dotnomi.nuclearage.CreateNuclearAge;
 import net.dotnomi.nuclearage.block.ModBlocks;
 import net.dotnomi.nuclearage.effect.ModEffects;
+import net.dotnomi.nuclearage.util.VectorHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -29,6 +31,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.server.ServerLifecycleHooks;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -40,17 +44,39 @@ public class ModEvents {
     @Mod.EventBusSubscriber(modid = CreateNuclearAge.MOD_ID)
     public static class ForgeEvents {
 
+        private static final List<Block> defaultExclusionList = List.of(
+                Blocks.AIR,
+                Blocks.VOID_AIR,
+                Blocks.STRUCTURE_VOID
+        );
+
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             List<ServerPlayer> players = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
+            MobEffectInstance radiationEffectInstance = new MobEffectInstance(ModEffects.RADIATION.get(), 5, 0);
 
-            for (ServerPlayer player: players) {
-                if (hasRadioavtiveItemsInInventory(player)
-                        || isNearRadiactiveItem(player, player.level())
-                        || isNearRadioactiveBlock(player, player.level())
-                        || isNearRadioactiveContainer(player, player.level())
-                ) {
-                    player.addEffect(new MobEffectInstance(ModEffects.RADIATION.get(), 5, 0));
+            for (ServerPlayer player : players) {
+                Level world = player.level();
+                BlockPos playerPosition = player.getOnPos();
+                int radiationEntityRadius = 2 * 16; // 4 chunks radius
+
+                if (hasRadioavtiveItemsInInventory(player))
+                    player.addEffect(radiationEffectInstance);
+
+                List<Entity> entities = world.getEntitiesOfClass(Entity.class, new AABB(
+                        playerPosition.offset(-radiationEntityRadius, -radiationEntityRadius, -radiationEntityRadius),
+                        playerPosition.offset(radiationEntityRadius, radiationEntityRadius, radiationEntityRadius)
+                ));
+
+                for (Entity entity : entities) {
+                    if ((entity instanceof LivingEntity livingEntity)) {
+                        if (isNearRadiactiveItem(entity, world, player))
+                            livingEntity.addEffect(radiationEffectInstance);
+                        if (isNearRadioactiveBlock(entity, world))
+                            livingEntity.addEffect(radiationEffectInstance);
+                        if (isNearRadioactiveContainer(entity, world))
+                            livingEntity.addEffect(radiationEffectInstance);
+                    }
                 }
             }
         }
@@ -58,8 +84,9 @@ public class ModEvents {
         private static boolean hasRadioavtiveItemsInInventory(Player player) {
             for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
                 ItemStack itemStack = player.getInventory().getItem(i);
-                if (isItemContainerRadioavtive(itemStack) || isItemRadiactive(itemStack)) {
-                    return true;
+
+                if (isItemContainerRadioavtive(itemStack) || isItemRadioactive(itemStack)) {
+                    if (itemStack.getItem() != Items.AIR) return true;
                 }
             }
 
@@ -73,7 +100,7 @@ public class ModEvents {
                 IItemHandler itemHandler = itemHandlerOptional.orElse(null);
                 if (itemHandler != null) {
                     for (int i = 0; i < itemHandler.getSlots(); i++) {
-                        if (isItemRadiactive(itemHandler.getStackInSlot(i))) {
+                        if (isItemRadioactive(itemHandler.getStackInSlot(i))) {
                             return true;
                         }
                     }
@@ -83,7 +110,7 @@ public class ModEvents {
             return false;
         }
 
-        private static boolean isNearRadiactiveItem(Entity entity, Level world) {
+        private static boolean isNearRadiactiveItem(Entity entity, Level world, Player player) {
             BlockPos entityPosition = new BlockPos(entity.getOnPos());
             int radius = 12;
 
@@ -95,12 +122,8 @@ public class ModEvents {
             for (ItemEntity itemEntity : itemEntities) {
                 ItemStack itemStack = itemEntity.getItem();
 
-                if (isItemContainerRadioavtive(itemStack) || isItemRadiactive(itemStack)) {
-                    List<Block> excludedBlocks = List.of(
-                            Blocks.AIR
-                    );
-
-                    if (!isShieldedFromRadiation(entity, world, itemEntity.blockPosition(), excludedBlocks)) {
+                if (isItemContainerRadioavtive(itemStack) || isItemRadioactive(itemStack)) {
+                    if (!isShieldedFromRadiation(entity, world, new BlockPos(VectorHelper.getBlockPosition(itemEntity.getEyePosition())), defaultExclusionList)) {
                         return true;
                     }
                 }
@@ -115,13 +138,12 @@ public class ModEvents {
             for (BlockPos blockPosition : BlockPos.betweenClosed(
                     entityPosition.offset(-radius, -radius, -radius),
                     entityPosition.offset(radius, radius, radius))) {
-                BlockEntity blockEntity = world.getBlockEntity(blockPosition);
 
                 if (ModBlocks.getLevelOneRadiationBlocks().contains(world.getBlockState(blockPosition).getBlock())) {
-                    List<Block> excludedBlocks = new java.util.ArrayList<>(ModBlocks.getLevelOneRadiationBlocks());
-                    excludedBlocks.add(Blocks.AIR);
+                    List<Block> exclusionList = new ArrayList<>(defaultExclusionList);
+                    exclusionList.addAll(ModBlocks.getLevelOneRadiationBlocks());
 
-                    if (!isShieldedFromRadiation(entity, world, blockPosition, excludedBlocks)) {
+                    if (!isShieldedFromRadiation(entity, world, blockPosition, exclusionList)) {
                         return true;
                     }
                 }
@@ -148,13 +170,11 @@ public class ModEvents {
                             ItemStack itemStack = itemHandler.getStackInSlot(i);
                             BlockState blockState = world.getBlockState(blockPosition);
 
-                            if (isItemRadiactive(itemStack)) {
-                                List<Block> excludedBlocks = List.of(
-                                        Blocks.AIR,
-                                        blockState.getBlock()
-                                );
+                            if (isItemContainerRadioavtive(itemStack) || isItemRadioactive(itemStack)) {
+                                List<Block> exclusionList = defaultExclusionList;
+                                exclusionList.add(blockState.getBlock());
 
-                                if (!isShieldedFromRadiation(entity, world, blockPosition, excludedBlocks)) {
+                                if (!isShieldedFromRadiation(entity, world, blockPosition, exclusionList)) {
                                     return true;
                                 }
                             }
@@ -193,7 +213,7 @@ public class ModEvents {
                         && isRayBlocked(leftArmHitResult, world, shieldExclusionList)
                         && isRayBlocked(rightArmHitResult, world, shieldExclusionList)
                         && isRayBlocked(footHitResult, world, shieldExclusionList);
-            } else if (entity instanceof Mob mob) {
+            } else if (entity instanceof LivingEntity) {
                 Vec3 entityPosition = entity.position().add(0,0.5F,0);
                 Vec3 radiationSourcePosition = Vec3.atCenterOf(radiationSource);
 
@@ -211,7 +231,8 @@ public class ModEvents {
                 BlockPos hitBlockPosition = blockHitResult.getBlockPos();
                 BlockState hitBlockState = world.getBlockState(hitBlockPosition);
 
-                return (!shieldExclusionList.contains(hitBlockState.getBlock()));
+                if (hitBlockState.isSolidRender(world, hitBlockPosition))
+                    return (!shieldExclusionList.contains(hitBlockState.getBlock()));
             }
             return false;
         }
@@ -227,7 +248,7 @@ public class ModEvents {
             return player.position().add(offsetX, 1.5, offsetZ);
         }
 
-        private static boolean isItemRadiactive(ItemStack itemStack) {
+        private static boolean isItemRadioactive(ItemStack itemStack) {
             return (ModBlocks.getLevelOneRadiationBlockItems().contains(itemStack.getItem()));
         }
     }

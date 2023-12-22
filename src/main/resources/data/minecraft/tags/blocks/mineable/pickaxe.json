@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "nuclearage:radiocalcite_block",
+    "nuclearage:radionite_block",
+    "nuclearage:radiorite_block",
+    "nuclearage:radioschist_block",
+    "nuclearage:radiosite_block",
+    "nuclearage:radiotuffite_block"
+  ]
+}

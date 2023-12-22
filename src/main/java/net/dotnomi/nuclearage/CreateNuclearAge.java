@@ -6,8 +6,6 @@ import net.dotnomi.nuclearage.effect.ModEffects;
 import net.dotnomi.nuclearage.event.ModEvents;
 import net.dotnomi.nuclearage.item.ModCreativeModeTabs;
 import net.dotnomi.nuclearage.item.ModItems;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
