@@ -21,6 +21,9 @@ public class ModBlocks {
     public static final DeferredRegister<Block> BLOCKS =
             DeferredRegister.create(ForgeRegistries.BLOCKS, CreateNuclearAge.MOD_ID);
 
+    public static final RegistryObject<Block> REACTOR_CHAMBER = registerBlock("reactor_chamber",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).requiresCorrectToolForDrops()));
+
     public static final RegistryObject<Block> RADIOCALCITE_BLOCK = registerBlock("radiocalcite_block",
             () -> new Block(BlockBehaviour.Properties.copy(Blocks.CALCITE).requiresCorrectToolForDrops()));
 

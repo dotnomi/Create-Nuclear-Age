@@ -2,9 +2,19 @@ package net.dotnomi.nuclearage.event;
 
 import net.dotnomi.nuclearage.CreateNuclearAge;
 import net.dotnomi.nuclearage.block.ModBlocks;
+import net.dotnomi.nuclearage.client.ClientRadiationData;
+import net.dotnomi.nuclearage.configuration.ModConfig;
+import net.dotnomi.nuclearage.configuration.ServerConfig;
 import net.dotnomi.nuclearage.effect.ModEffects;
+import net.dotnomi.nuclearage.networking.ModMessages;
+import net.dotnomi.nuclearage.networking.packet.RadiationDataSyncS2CPacket;
+import net.dotnomi.nuclearage.radiation.EntityRadiation;
+import net.dotnomi.nuclearage.radiation.EntityRadiationProvider;
+import net.dotnomi.nuclearage.util.RadiationChecks;
 import net.dotnomi.nuclearage.util.VectorHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
@@ -25,14 +35,19 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /*
@@ -44,24 +59,24 @@ public class ModEvents {
     @Mod.EventBusSubscriber(modid = CreateNuclearAge.MOD_ID)
     public static class ForgeEvents {
 
-        private static final List<Block> defaultExclusionList = List.of(
-                Blocks.AIR,
-                Blocks.VOID_AIR,
-                Blocks.STRUCTURE_VOID
-        );
-
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             List<ServerPlayer> players = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
-            MobEffectInstance radiationEffectInstance = new MobEffectInstance(ModEffects.RADIATION.get(), 5, 0);
+            MobEffectInstance radiationStage1 = new MobEffectInstance(ModEffects.RADIATION.get(), 20 * 30, 0);
+            MobEffectInstance radiationStage2 = new MobEffectInstance(ModEffects.RADIATION.get(), 20 * 30, 1);
+            MobEffectInstance radiationStage3 = new MobEffectInstance(ModEffects.RADIATION.get(), 20 * 30, 2);
 
             for (ServerPlayer player : players) {
                 Level world = player.level();
                 BlockPos playerPosition = player.getOnPos();
                 int radiationEntityRadius = 2 * 16; // 4 chunks radius
 
-                if (hasRadioavtiveItemsInInventory(player))
-                    player.addEffect(radiationEffectInstance);
+                if (RadiationChecks.hasRadioavtiveItemsInInventory(player)) {
+                    player.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(radiation -> {
+                        radiation.addRadiation(100);
+                        ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(radiation.getRadiation()), player);
+                    });
+                }
 
                 List<Entity> entities = world.getEntitiesOfClass(Entity.class, new AABB(
                         playerPosition.offset(-radiationEntityRadius, -radiationEntityRadius, -radiationEntityRadius),
@@ -70,186 +85,85 @@ public class ModEvents {
 
                 for (Entity entity : entities) {
                     if ((entity instanceof LivingEntity livingEntity)) {
-                        if (isNearRadiactiveItem(entity, world, player))
-                            livingEntity.addEffect(radiationEffectInstance);
-                        if (isNearRadioactiveBlock(entity, world))
-                            livingEntity.addEffect(radiationEffectInstance);
-                        if (isNearRadioactiveContainer(entity, world))
-                            livingEntity.addEffect(radiationEffectInstance);
-                    }
-                }
-            }
-        }
+                        if (RadiationChecks.isNearRadiactiveItem(entity, world))
+                            livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(radiation -> {
+                                radiation.addRadiation(100);
+                                if (livingEntity instanceof Player)
+                                    ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(radiation.getRadiation()), player);
+                            });
+                        if (RadiationChecks.isNearRadioactiveBlock(entity, world))
+                            livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(radiation -> {
+                                radiation.addRadiation(100);
+                                if (livingEntity instanceof Player)
+                                    ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(radiation.getRadiation()), player);
+                            });
+                        if (RadiationChecks.isNearRadioactiveContainer(entity, world))
+                            livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(radiation -> {
+                                radiation.addRadiation(100);
+                                if (livingEntity instanceof Player)
+                                    ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(radiation.getRadiation()), player);
+                            });
 
-        private static boolean hasRadioavtiveItemsInInventory(Player player) {
-            for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-                ItemStack itemStack = player.getInventory().getItem(i);
+                        livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(entityRadiation -> {
+                            int radiation = entityRadiation.getRadiation();
 
-                if (isItemContainerRadioavtive(itemStack) || isItemRadioactive(itemStack)) {
-                    if (itemStack.getItem() != Items.AIR) return true;
-                }
-            }
+                            //player.sendSystemMessage(Component.literal(livingEntity.getType().toShortString() + " | RU: " + radiation + " | H: " + livingEntity.getHealth()));
 
-            return false;
-        }
-
-        private static boolean isItemContainerRadioavtive(ItemStack itemStack) {
-            LazyOptional<IItemHandler> itemHandlerOptional = itemStack.getCapability(CapabilityManager.get(new CapabilityToken<>() {}));
-
-            if (itemHandlerOptional.isPresent()) {
-                IItemHandler itemHandler = itemHandlerOptional.orElse(null);
-                if (itemHandler != null) {
-                    for (int i = 0; i < itemHandler.getSlots(); i++) {
-                        if (isItemRadioactive(itemHandler.getStackInSlot(i))) {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private static boolean isNearRadiactiveItem(Entity entity, Level world, Player player) {
-            BlockPos entityPosition = new BlockPos(entity.getOnPos());
-            int radius = 12;
-
-            List<ItemEntity> itemEntities = world.getEntitiesOfClass(ItemEntity.class, new AABB(
-                    entityPosition.offset(-radius, -radius, -radius),
-                    entityPosition.offset(radius, radius, radius)
-            ));
-
-            for (ItemEntity itemEntity : itemEntities) {
-                ItemStack itemStack = itemEntity.getItem();
-
-                if (isItemContainerRadioavtive(itemStack) || isItemRadioactive(itemStack)) {
-                    if (!isShieldedFromRadiation(entity, world, new BlockPos(VectorHelper.getBlockPosition(itemEntity.getEyePosition())), defaultExclusionList)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        private static boolean isNearRadioactiveBlock(Entity entity, Level world) {
-            BlockPos entityPosition = new BlockPos(entity.getOnPos());
-            int radius = 12;
-
-            for (BlockPos blockPosition : BlockPos.betweenClosed(
-                    entityPosition.offset(-radius, -radius, -radius),
-                    entityPosition.offset(radius, radius, radius))) {
-
-                if (ModBlocks.getLevelOneRadiationBlocks().contains(world.getBlockState(blockPosition).getBlock())) {
-                    List<Block> exclusionList = new ArrayList<>(defaultExclusionList);
-                    exclusionList.addAll(ModBlocks.getLevelOneRadiationBlocks());
-
-                    if (!isShieldedFromRadiation(entity, world, blockPosition, exclusionList)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        private static boolean isNearRadioactiveContainer(Entity entity, Level world) {
-            BlockPos entityPosition = new BlockPos(entity.getOnPos());
-            int radius = 12;
-
-            for (BlockPos blockPosition : BlockPos.betweenClosed(
-                    entityPosition.offset(-radius, -radius, -radius),
-                    entityPosition.offset(radius, radius, radius))) {
-                BlockEntity blockEntity = world.getBlockEntity(blockPosition);
-
-                if (blockEntity != null) {
-                    LazyOptional<IItemHandler> itemHandlerOptional = blockEntity.getCapability(CapabilityManager.get(new CapabilityToken<>() {}));
-
-                    if (itemHandlerOptional.isPresent()) {
-                        IItemHandler itemHandler = itemHandlerOptional.orElse(null);
-
-                        for (int i = 0; i < itemHandler.getSlots(); i++) {
-                            ItemStack itemStack = itemHandler.getStackInSlot(i);
-                            BlockState blockState = world.getBlockState(blockPosition);
-
-                            if (isItemContainerRadioavtive(itemStack) || isItemRadioactive(itemStack)) {
-                                List<Block> exclusionList = defaultExclusionList;
-                                exclusionList.add(blockState.getBlock());
-
-                                if (!isShieldedFromRadiation(entity, world, blockPosition, exclusionList)) {
-                                    return true;
-                                }
+                            if (radiation >= 35000 && radiation < 75000) {
+                                livingEntity.removeEffect(ModEffects.RADIATION.get());
+                                livingEntity.addEffect(radiationStage1);
+                            } else if (radiation >= 75000 && radiation < 100000) {
+                                livingEntity.removeEffect(ModEffects.RADIATION.get());
+                                livingEntity.addEffect(radiationStage2);
+                            } else if (radiation >= 100000) {
+                                livingEntity.removeEffect(ModEffects.RADIATION.get());
+                                livingEntity.addEffect(radiationStage3);
+                            } else {
+                                livingEntity.removeEffect(ModEffects.RADIATION.get());
                             }
-                        }
+                        });
+
+                        //player.sendSystemMessage(Component.literal("Config Value: " + ServerConfig.testValue));
+
                     }
                 }
             }
-            return false;
         }
 
-        private static boolean isShieldedFromRadiation(Entity entity, Level world, BlockPos radiationSource, List<Block> shieldExclusionList) {
-            if (entity instanceof Player player) {
-                Vec3 entityEyePosition = entity.getEyePosition();
-                Vec3 entityLeftArmPosition = getArmPosition(player, true);
-                Vec3 entityRightArmPosition = getArmPosition(player, false);
-                Vec3 entityFootPosition = entity.position().add(0,0.5F,0);
-                Vec3 radiationSourcePosition = Vec3.atCenterOf(radiationSource);
-
-                BlockHitResult eyeHitResult = world.clip(
-                        new ClipContext(entityEyePosition, radiationSourcePosition, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity)
-                );
-
-                BlockHitResult leftArmHitResult = world.clip(
-                        new ClipContext(entityLeftArmPosition, radiationSourcePosition, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity)
-                );
-
-                BlockHitResult rightArmHitResult = world.clip(
-                        new ClipContext(entityRightArmPosition, radiationSourcePosition, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity)
-                );
-
-                BlockHitResult footHitResult = world.clip(
-                        new ClipContext(entityFootPosition, radiationSourcePosition, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity)
-                );
-
-                return isRayBlocked(eyeHitResult, world, shieldExclusionList)
-                        && isRayBlocked(leftArmHitResult, world, shieldExclusionList)
-                        && isRayBlocked(rightArmHitResult, world, shieldExclusionList)
-                        && isRayBlocked(footHitResult, world, shieldExclusionList);
-            } else if (entity instanceof LivingEntity) {
-                Vec3 entityPosition = entity.position().add(0,0.5F,0);
-                Vec3 radiationSourcePosition = Vec3.atCenterOf(radiationSource);
-
-                BlockHitResult hitResult = world.clip(
-                        new ClipContext(entityPosition, radiationSourcePosition, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity)
-                );
-
-                return isRayBlocked(hitResult, world, shieldExclusionList);
+        @SubscribeEvent
+        public static void onAttachCapabilitiesPlayer(AttachCapabilitiesEvent<Entity> event) {
+            if (event.getObject() instanceof LivingEntity) {
+                if (!event.getObject().getCapability(EntityRadiationProvider.ENTITY_RADIATION).isPresent()) {
+                    event.addCapability(new ResourceLocation(CreateNuclearAge.MOD_ID, "properties"), new EntityRadiationProvider());
+                }
             }
-            return false;
         }
 
-        private static boolean isRayBlocked(BlockHitResult blockHitResult, Level world, List<Block> shieldExclusionList) {
-            if (blockHitResult.getType() == HitResult.Type.BLOCK) {
-                BlockPos hitBlockPosition = blockHitResult.getBlockPos();
-                BlockState hitBlockState = world.getBlockState(hitBlockPosition);
-
-                if (hitBlockState.isSolidRender(world, hitBlockPosition))
-                    return (!shieldExclusionList.contains(hitBlockState.getBlock()));
+        @SubscribeEvent
+        public static void onPlayerCloned(PlayerEvent.Clone event) {
+            if (event.isWasDeath()) {
+                event.getOriginal().getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(oldStore -> {
+                    event.getEntity().getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(newStore -> {
+                        newStore.copyFrom(oldStore);
+                    });
+                });
             }
-            return false;
         }
 
-        private static Vec3 getArmPosition(Player player, boolean isLeftArm) {
-            float yaw = player.getYRot();
-            float armOffset = isLeftArm ? 0.35F : -0.35F;
-            float radianYaw = (float) Math.toRadians(yaw);
-
-            double offsetX = Math.sin(radianYaw) * armOffset;
-            double offsetZ = Math.cos(radianYaw) * armOffset;
-
-            return player.position().add(offsetX, 1.5, offsetZ);
+        @SubscribeEvent
+        public static void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
+            event.register(EntityRadiation.class);
         }
 
-        private static boolean isItemRadioactive(ItemStack itemStack) {
-            return (ModBlocks.getLevelOneRadiationBlockItems().contains(itemStack.getItem()));
+        @SubscribeEvent
+        public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
+            if (!event.getLevel().isClientSide) {
+                if (event.getEntity() instanceof ServerPlayer player) {
+                    player.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(radiation -> {
+                        ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(radiation.getRadiation()), player);
+                    });
+                }
+            }
         }
     }
 

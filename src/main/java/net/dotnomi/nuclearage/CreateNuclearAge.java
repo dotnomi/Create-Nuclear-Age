@@ -2,17 +2,21 @@ package net.dotnomi.nuclearage;
 
 import com.mojang.logging.LogUtils;
 import net.dotnomi.nuclearage.block.ModBlocks;
+import net.dotnomi.nuclearage.configuration.CommonConfig;
 import net.dotnomi.nuclearage.effect.ModEffects;
 import net.dotnomi.nuclearage.event.ModEvents;
 import net.dotnomi.nuclearage.item.ModCreativeModeTabs;
 import net.dotnomi.nuclearage.item.ModItems;
+import net.dotnomi.nuclearage.networking.ModMessages;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -42,11 +46,18 @@ public class CreateNuclearAge
         MinecraftForge.EVENT_BUS.register(this);
 
         modEventBus.addListener(this::addCreative);
+
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, net.dotnomi.nuclearage.configuration.ModConfig.COMMON_CONFIG);
+        //ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, net.dotnomi.nuclearage.configuration.ModConfig.CLIENT_CONFIG);
+        //ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, net.dotnomi.nuclearage.configuration.ModConfig.SERVER_CONFIG);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)
     {
+        event.enqueueWork(ModMessages::register);
 
+        CommonConfig.RADIOACTIVE_BLOCKS.forEach((block) -> LOGGER.info("ITEM >> {} / {}", block.getBlock().toString(), block.getRadiation()));
+        CommonConfig.RADIOACTIVE_ITEMS.forEach((item) -> LOGGER.info("ITEM >> {} / {}", item.getItem().toString(), item.getRadiation()));
     }
 
     // Add the example block item to the building blocks tab
@@ -72,7 +83,6 @@ public class CreateNuclearAge
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event)
         {
-
         }
     }
 }

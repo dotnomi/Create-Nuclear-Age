@@ -17,6 +17,9 @@ public class ModItems {
     public static final RegistryObject<Item> COMPRESSED_COAL = ITEMS.register("compressed_coal",
             () -> new Item(new Item.Properties()));
 
+    public static final RegistryObject<Item> GEIGER_COUNTER = ITEMS.register("geiger_counter",
+            () -> new Item(new Item.Properties()));
+
     public static final RegistryObject<Item> RADIOCALCITE = ITEMS.register("radiocalcite",
             () -> new Item(new Item.Properties()));
 

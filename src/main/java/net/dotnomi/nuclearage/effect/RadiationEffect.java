@@ -7,16 +7,30 @@ import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
 
 public class RadiationEffect extends MobEffect {
+
+    final float stageOneAmplifier = 1.0F / 64;
+    final float stageTwoAmplifier = 1.0F / 16;
+    final float stageThreeAmplifier = 1.0F / 2;
+    private int tickTimer;
+
     public RadiationEffect(MobEffectCategory mobEffectCategory, int color) {
         super(mobEffectCategory, color);
     }
 
     @Override
     public void applyEffectTick(@NotNull LivingEntity pLivingEntity, int pAmplifier) {
-        int amplifier = Math.min(Math.max(pAmplifier, 0), 2);
+        float stageAmplifier = 0;
 
-        if (pLivingEntity instanceof Player player) player.causeFoodExhaustion(0.005F * (float)(amplifier + 1));
-        if (pLivingEntity.getHealth() > 1.0F) pLivingEntity.hurt(pLivingEntity.damageSources().magic(),(amplifier + (float) 1) / 4);
+        if (tickTimer % 5 == 0) {
+                        if (pAmplifier == 0) stageAmplifier = stageOneAmplifier;
+            else if (pAmplifier == 1) stageAmplifier = stageTwoAmplifier;
+            else if (pAmplifier >= 2) stageAmplifier = stageThreeAmplifier;
+            if (pLivingEntity instanceof Player player) player.causeFoodExhaustion(stageAmplifier);
+            pLivingEntity.hurt(pLivingEntity.damageSources().magic(), stageAmplifier * 2);
+
+            tickTimer = 0;
+        }
+        tickTimer++;
     }
 
     @Override

@@ -34,6 +34,9 @@ public class ModCreativeModeTabs {
                         pOutput.accept(ModItems.RADIOSITE.get());
                         pOutput.accept(ModBlocks.RADIOTUFFITE_BLOCK.get());
                         pOutput.accept(ModItems.RADIOTUFFITE.get());
+
+                        pOutput.accept(ModItems.GEIGER_COUNTER.get());
+                        pOutput.accept(ModBlocks.REACTOR_CHAMBER.get());
                     })
                     .build());
 
