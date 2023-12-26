@@ -57,7 +57,9 @@ public class CreateNuclearAge
         event.enqueueWork(ModMessages::register);
 
         CommonConfig.RADIOACTIVE_BLOCKS.forEach((block) -> LOGGER.info("ITEM >> {} / {}", block.getBlock().toString(), block.getRadiation()));
-        CommonConfig.RADIOACTIVE_ITEMS.forEach((item) -> LOGGER.info("ITEM >> {} / {}", item.getItem().toString(), item.getRadiation()));
+
+
+        CommonConfig.RADIOACTIVE_ITEMS.forEach((item, rad) -> LOGGER.info("ITEM >> {} / {}", item.toString(), rad));
     }
 
     // Add the example block item to the building blocks tab

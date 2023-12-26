@@ -12,6 +12,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,23 +46,23 @@ public class ModConfig {
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RADIOACTIVE_BLOCK_STRINGS = COMMON_BUILDER
             .comment("List of all radioactive blocks.")
             .defineListAllowEmpty("radioactivity.blocks", List.of(
-                    "nuclearage:radiocalcite_block,20",
-                    "nuclearage:radionite_block,15",
-                    "nuclearage:radiorite_block,10",
-                    "nuclearage:radioschist_block,25",
-                    "nuclearage:radiosite_block,8",
-                    "nuclearage:radiotuffite_block,18"
+                    "nuclearage:radiocalcite_block;20",
+                    "nuclearage:radionite_block;15",
+                    "nuclearage:radiorite_block;10",
+                    "nuclearage:radioschist_block;25",
+                    "nuclearage:radiosite_block;8",
+                    "nuclearage:radiotuffite_block;18"
                     ), ModConfig::validateBlockName);
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RADIOACTIVE_ITEM_STRINGS = COMMON_BUILDER
             .comment("List of all radioactive items.")
             .defineListAllowEmpty("radioactivity.items", List.of(
-                    "nuclearage:radiocalcite,18",
-                    "nuclearage:radionite,13",
-                    "nuclearage:radiorite,8",
-                    "nuclearage:radioschist,23",
-                    "nuclearage:radiosite,6",
-                    "nuclearage:radiotuffite,16"
-            ), ModConfig::validateBlockName);
+                    "nuclearage:radiocalcite;18",
+                    "nuclearage:radionite;13",
+                    "nuclearage:radiorite;8",
+                    "nuclearage:radioschist;23",
+                    "nuclearage:radiosite;6",
+                    "nuclearage:radiotuffite;16"
+            ), ModConfig::validateItemName);
     public static final ForgeConfigSpec COMMON_CONFIG = COMMON_BUILDER.build();
 
     @SubscribeEvent
@@ -74,7 +75,7 @@ public class ModConfig {
         if (COMMON_CONFIG.isLoaded()) {
             CommonConfig.RADIOACTIVE_BLOCKS = RADIOACTIVE_BLOCK_STRINGS.get().stream()
                     .map(blockEntry -> {
-                        String[] parameters = blockEntry.split(",");
+                        String[] parameters = blockEntry.split(";");
                         if (parameters.length < 2) return null;
 
                         if (validateBlockName(parameters[0])) {
@@ -85,9 +86,9 @@ public class ModConfig {
                         return null;
                     }).collect(Collectors.toSet());
 
-            CommonConfig.RADIOACTIVE_ITEMS = RADIOACTIVE_ITEM_STRINGS.get().stream()
+            CommonConfig.RADIOACTIVE_ITEMS = (HashMap<Item, Integer>) RADIOACTIVE_ITEM_STRINGS.get().stream()
                     .map(blockEntry -> {
-                        String[] parameters = blockEntry.split(",");
+                        String[] parameters = blockEntry.split(";");
                         if (parameters.length < 2) return null;
 
                         if (validateItemName(parameters[0])) {
@@ -96,7 +97,7 @@ public class ModConfig {
                             return new RadiatedItem(item, radiationUnitsPerTick);
                         }
                         return null;
-                    }).collect(Collectors.toSet());
+                    }).collect(Collectors.toMap(RadiatedItem::getItem, RadiatedItem::getRadiation));
         }
     }
 
