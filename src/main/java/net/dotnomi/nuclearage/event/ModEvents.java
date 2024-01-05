@@ -92,8 +92,6 @@ public class ModEvents {
 
                             int radiation = entityRadiation.getRadiation();
 
-                            //player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T Rads per Sec: " + (radiation - oldRadiation) + " RU/s"));
-
                             if (livingEntity instanceof ServerPlayer entityPlayer) {
                                 if (RadiationHelper.hasRadioavtiveItemsInInventory(entityPlayer)) {
                                     entityRadiation.addRadiation(RadiationHelper.getInventoryRadiation(entityPlayer));

@@ -6,6 +6,7 @@ import net.dotnomi.nuclearage.configuration.CommonConfig;
 import net.dotnomi.nuclearage.effect.ModEffects;
 import net.dotnomi.nuclearage.event.ModEvents;
 import net.dotnomi.nuclearage.item.ModCreativeModeTabs;
+import net.dotnomi.nuclearage.item.ModItemProperties;
 import net.dotnomi.nuclearage.item.ModItems;
 import net.dotnomi.nuclearage.networking.ModMessages;
 import net.minecraft.world.item.Items;
@@ -88,6 +89,9 @@ public class CreateNuclearAge
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event)
         {
+            event.enqueueWork(() -> {
+                ModItemProperties.addCustomItemProperties();
+            });
         }
     }
 }
