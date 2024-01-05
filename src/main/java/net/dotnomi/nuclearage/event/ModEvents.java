@@ -35,6 +35,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import net.minecraftforge.server.command.ConfigCommand;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -53,17 +54,12 @@ public class ModEvents {
                 radiationStage2 = new MobEffectInstance(ModEffects.RADIATION.get(), 20 * 30, 1);
                 radiationStage3 = new MobEffectInstance(ModEffects.RADIATION.get(), 20 * 30, 2);
                 List<ServerPlayer> players = event.getServer().getPlayerList().getPlayers();
+                List<LivingEntity> livingEntityList = new ArrayList<>();
 
                 for (ServerPlayer player : players) {
                     Level world = player.level();
                     BlockPos playerPosition = player.getOnPos();
                     int radiationEntityRadius = 2 * 16; // 4 chunks radius
-
-                    if (RadiationHelper.hasRadioavtiveItemsInInventory(player)) {
-                        player.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(radiation -> {
-                            radiation.addRadiation(RadiationHelper.getInventoryRadiation(player));
-                        });
-                    }
 
                     List<Entity> entities = world.getEntitiesOfClass(Entity.class, new AABB(
                             playerPosition.offset(-radiationEntityRadius, -radiationEntityRadius, -radiationEntityRadius),
@@ -72,84 +68,65 @@ public class ModEvents {
 
                     for (Entity entity : entities) {
                         if ((entity instanceof LivingEntity livingEntity)) {
-                            /*if (RadiationHelper.isNearRadiactiveItem(entity, world))
-                                livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(entityRadiation -> {
-                                    entityRadiation.addRadiation(RadiationHelper.getNearbyItemRadiation(entity, world, 12));
-                                });
-                            if (RadiationHelper.isNearRadioactiveBlock(entity, world))
-                                livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(entityRadiation -> {
-                                    entityRadiation.addRadiation(RadiationHelper.getNearbyBlockRadiation(entity, world, 12));
-                                });
-                            if (RadiationHelper.isNearRadioactiveContainer(entity, world))
-                                livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(entityRadiation -> {
-                                    entityRadiation.addRadiation(RadiationHelper.getNearbyContainerRadiation(entity, world, 12));
-                                });*/
-
-
-
-                            livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(entityRadiation -> {
-
-                                int oldRadiation = entityRadiation.getRadiation();
-
-                                if (RadiationHelper.isNearRadiactiveItem(entity, world)) {
-                                    int addedRadiation = RadiationHelper.getNearbyItemRadiation(entity, world, 12);
-                                    player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T ItemRads: " + addedRadiation));
-                                    entityRadiation.addRadiation(addedRadiation);
-                                }
-
-
-                                if (RadiationHelper.isNearRadioactiveBlock(entity, world)) {
-                                    int addedRadiation = RadiationHelper.getNearbyBlockRadiation(entity, world, 12);
-                                    player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T BlockRads: " + addedRadiation));
-                                    entityRadiation.addRadiation(addedRadiation);
-                                }
-
-
-                                if (RadiationHelper.isNearRadioactiveContainer(entity, world)){
-                                    int addedRadiation = RadiationHelper.getNearbyContainerRadiation(entity, world, 12);
-                                    player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T ContainerRads: " + addedRadiation));
-                                    entityRadiation.addRadiation(addedRadiation);
-                                }
-
-                                int radiation = entityRadiation.getRadiation();
-                                player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T Rads per Sec: " + (radiation - oldRadiation) + " RU/s"));
-
-
-
-                                if (livingEntity instanceof Player)
-                                    ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(radiation), player);
-
-                                //player.sendSystemMessage(Component.literal(livingEntity.getType().toShortString() + " | RU: " + radiation + " | H: " + livingEntity.getHealth()));
-
-
-                                //int amplifier = Objects.requireNonNull(livingEntity.getEffect(ModEffects.RADIATION.get())).getAmplifier();
-
-                                if (radiation >= 350000 && radiation < 750000) {
-                                    if (!livingEntity.hasEffect(ModEffects.RADIATION.get()) || livingEntity.getEffect(ModEffects.RADIATION.get()).getAmplifier() != 0) {
-                                        livingEntity.removeEffect(ModEffects.RADIATION.get());
-                                        livingEntity.addEffect(radiationStage1);
-                                        player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T | " + radiation + " | Stage 1"));
-                                    }
-                                } else if (radiation >= 750000 && radiation < 1000000) {
-                                    if (!livingEntity.hasEffect(ModEffects.RADIATION.get()) || livingEntity.getEffect(ModEffects.RADIATION.get()).getAmplifier() != 1) {
-                                        livingEntity.removeEffect(ModEffects.RADIATION.get());
-                                        livingEntity.addEffect(radiationStage2);
-                                        player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T | " + radiation + " | Stage 2"));
-                                    }
-                                } else if (radiation >= 1000000) {
-                                    if (!livingEntity.hasEffect(ModEffects.RADIATION.get()) || livingEntity.getEffect(ModEffects.RADIATION.get()).getAmplifier() != 2) {
-                                        livingEntity.removeEffect(ModEffects.RADIATION.get());
-                                        livingEntity.addEffect(radiationStage3);
-                                        player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T | " + radiation + " | Stage 3"));
-                                    }
-                                } else {
-                                    livingEntity.removeEffect(ModEffects.RADIATION.get());
-                                }
-                            });
-
-                            //player.sendSystemMessage(Component.literal("Config Value: " + ServerConfig.testValue));
-
+                            if (!livingEntityList.contains(livingEntity)) {
+                                livingEntityList.add(livingEntity);
+                            }
                         }
+                    }
+
+                    for (LivingEntity livingEntity : livingEntityList) {
+                        livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(entityRadiation -> {
+                            int oldRadiation = entityRadiation.getRadiation();
+
+                            if (RadiationHelper.isNearRadiactiveItem(livingEntity, world)) {
+                                entityRadiation.addRadiation(RadiationHelper.getNearbyItemRadiation(livingEntity, world, 12));
+                            }
+
+                            if (RadiationHelper.isNearRadioactiveBlock(livingEntity, world)) {
+                                entityRadiation.addRadiation(RadiationHelper.getNearbyBlockRadiation(livingEntity, world, 12));
+                            }
+
+                            if (RadiationHelper.isNearRadioactiveContainer(livingEntity, world)){
+                                entityRadiation.addRadiation(RadiationHelper.getNearbyContainerRadiation(livingEntity, world, 12));
+                            }
+
+                            int radiation = entityRadiation.getRadiation();
+
+                            //player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T Rads per Sec: " + (radiation - oldRadiation) + " RU/s"));
+
+                            if (livingEntity instanceof ServerPlayer entityPlayer) {
+                                if (RadiationHelper.hasRadioavtiveItemsInInventory(entityPlayer)) {
+                                    entityRadiation.addRadiation(RadiationHelper.getInventoryRadiation(entityPlayer));
+                                }
+
+                                int radiation_per_second = radiation - oldRadiation;
+
+                                entityRadiation.setRadiationPerSec(radiation_per_second);
+                                ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(radiation, radiation_per_second), entityPlayer);
+                            }
+
+                            if (radiation >= 350000 && radiation < 750000) {
+                                if (!livingEntity.hasEffect(ModEffects.RADIATION.get()) || livingEntity.getEffect(ModEffects.RADIATION.get()).getAmplifier() != 0) {
+                                    livingEntity.removeEffect(ModEffects.RADIATION.get());
+                                    livingEntity.addEffect(radiationStage1);
+                                    player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T | " + radiation + " | Stage 1"));
+                                }
+                            } else if (radiation >= 750000 && radiation < 1000000) {
+                                if (!livingEntity.hasEffect(ModEffects.RADIATION.get()) || livingEntity.getEffect(ModEffects.RADIATION.get()).getAmplifier() != 1) {
+                                    livingEntity.removeEffect(ModEffects.RADIATION.get());
+                                    livingEntity.addEffect(radiationStage2);
+                                    player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T | " + radiation + " | Stage 2"));
+                                }
+                            } else if (radiation >= 1000000) {
+                                if (!livingEntity.hasEffect(ModEffects.RADIATION.get()) || livingEntity.getEffect(ModEffects.RADIATION.get()).getAmplifier() != 2) {
+                                    livingEntity.removeEffect(ModEffects.RADIATION.get());
+                                    livingEntity.addEffect(radiationStage3);
+                                    player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T | " + radiation + " | Stage 3"));
+                                }
+                            } else {
+                                livingEntity.removeEffect(ModEffects.RADIATION.get());
+                            }
+                        });
                     }
                 }
             }
@@ -185,7 +162,7 @@ public class ModEvents {
             if (!event.getLevel().isClientSide) {
                 if (event.getEntity() instanceof ServerPlayer player) {
                     player.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(radiation -> {
-                        ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(radiation.getRadiation()), player);
+                        ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(radiation.getRadiation(), 0), player);
                     });
                 }
             }

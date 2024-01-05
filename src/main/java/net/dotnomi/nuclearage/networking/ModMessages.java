@@ -28,12 +28,6 @@ public class ModMessages {
 
         INSTANCE = net;
 
-        net.messageBuilder(RadiationC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(RadiationC2SPacket::new)
-                .encoder(RadiationC2SPacket::toBytes)
-                .consumerMainThread(RadiationC2SPacket::handle)
-                .add();
-
         net.messageBuilder(RadiationDataSyncS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
                 .decoder(RadiationDataSyncS2CPacket::new)
                 .encoder(RadiationDataSyncS2CPacket::toBytes)

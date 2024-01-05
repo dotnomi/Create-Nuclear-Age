@@ -49,6 +49,8 @@ public class RadiationHudOverlay {
 
             guiGraphics.blit(RADIATION_ICON, x + relativeX, y + relativeY, 16, 16, 0, 0, 16, 16, 16,16);
 
+            guiGraphics.blit(RADIATION_ICON, x + relativeX, y + relativeY - 20, 16, 16, 0, 0, 16, 16, 16,16);
+
             int barLength = (int) Math.floor((double) freeSpace / 16);
             if (barLength < 2) return;
             for (int i = 0; i < barLength; i++) {
@@ -68,6 +70,7 @@ public class RadiationHudOverlay {
 
             int maxEntityRadiation = CommonConfig.DEADLY_RADIATION_DOSE;
             int playerRadiation = ClientRadiationData.getPlayerRadiation();
+            int playerRadiationPerSecond = ClientRadiationData.getPlayerRadiationPerSecond();
 
             float radiationPercentage = (float) playerRadiation / maxEntityRadiation * 100;
 
@@ -90,9 +93,13 @@ public class RadiationHudOverlay {
                 }
             }
 
-            String radiationStrength = playerRadiation + " RU";
+            String radiation_per_second = playerRadiationPerSecond + " RU/s";
+            String current_radiation = playerRadiation + " RU";
 
-            RenderHelper.drawTextField(guiGraphics, poseStack, radiationStrength, x + relativeX + 22 + 4, y + relativeY + 3, barLength * 16 - 8, 16 - 4, 0xFFFFFF, true, 0xFF0000);
+            //player.sendSystemMessage(Component.literal(radiation_per_second));
+
+            guiGraphics.drawString(minecraft.font, radiation_per_second, x + relativeX + 22 + 4, y + relativeY + 3 - 18, 0xFFFFFF);
+            RenderHelper.drawTextField(guiGraphics, poseStack, current_radiation, x + relativeX + 22 + 4, y + relativeY + 3, barLength * 16 - 8, 16 - 4, 0xFFFFFF);
         }
     });
 }

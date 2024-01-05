@@ -36,7 +36,7 @@ public class AddRadiationCommand {
                     entityRadiation.addRadiation(radiation);
 
                     if (entity instanceof ServerPlayer serverPlayer) {
-                        ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(entityRadiation.getRadiation()), serverPlayer);
+                        ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(entityRadiation.getRadiation(), radiation), serverPlayer);
                     }
                 });
             }
