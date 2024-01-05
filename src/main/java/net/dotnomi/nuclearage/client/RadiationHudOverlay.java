@@ -25,6 +25,36 @@ public class RadiationHudOverlay {
     private static final ResourceLocation RADIATION_BAR = new ResourceLocation(CreateNuclearAge.MOD_ID,
             "textures/radiation/radiation_bar.png");
 
+    private static final ResourceLocation RADIATION_INDICATOR_0 = new ResourceLocation(CreateNuclearAge.MOD_ID,
+            "textures/radiation/radiation_indicator_0.png");
+
+    private static final ResourceLocation RADIATION_INDICATOR_1 = new ResourceLocation(CreateNuclearAge.MOD_ID,
+            "textures/radiation/radiation_indicator_1.png");
+
+    private static final ResourceLocation RADIATION_INDICATOR_2 = new ResourceLocation(CreateNuclearAge.MOD_ID,
+            "textures/radiation/radiation_indicator_2.png");
+
+    private static final ResourceLocation RADIATION_INDICATOR_3 = new ResourceLocation(CreateNuclearAge.MOD_ID,
+            "textures/radiation/radiation_indicator_3.png");
+
+    private static final ResourceLocation RADIATION_INDICATOR_4 = new ResourceLocation(CreateNuclearAge.MOD_ID,
+            "textures/radiation/radiation_indicator_4.png");
+
+    private static final ResourceLocation RADIATION_INDICATOR_5 = new ResourceLocation(CreateNuclearAge.MOD_ID,
+            "textures/radiation/radiation_indicator_5.png");
+
+    private static final ResourceLocation RADIATION_INDICATOR_6 = new ResourceLocation(CreateNuclearAge.MOD_ID,
+            "textures/radiation/radiation_indicator_6.png");
+
+    private static final ResourceLocation RADIATION_INDICATOR_7 = new ResourceLocation(CreateNuclearAge.MOD_ID,
+            "textures/radiation/radiation_indicator_7.png");
+
+    private static final ResourceLocation RADIATION_INDICATOR_8 = new ResourceLocation(CreateNuclearAge.MOD_ID,
+            "textures/radiation/radiation_indicator_8.png");
+
+    private static final ResourceLocation RADIATION_INDICATOR_9 = new ResourceLocation(CreateNuclearAge.MOD_ID,
+            "textures/radiation/radiation_indicator_9.png");
+
     public static final IGuiOverlay HUD_RADIATION = ((gui, guiGraphics, partialTick, screenWidth, screenHeight) -> {
         Minecraft minecraft = Minecraft.getInstance();
         PoseStack poseStack = guiGraphics.pose();
@@ -49,7 +79,32 @@ public class RadiationHudOverlay {
 
             guiGraphics.blit(RADIATION_ICON, x + relativeX, y + relativeY, 16, 16, 0, 0, 16, 16, 16,16);
 
-            guiGraphics.blit(RADIATION_ICON, x + relativeX, y + relativeY - 20, 16, 16, 0, 0, 16, 16, 16,16);
+            int playerRadiationPerSecond = ClientRadiationData.getPlayerRadiationPerSecond();
+            String radiation_per_second = playerRadiationPerSecond + " RU/s";
+
+            if (playerRadiationPerSecond < 10) {
+                renderRadiationIndicator(guiGraphics, RADIATION_INDICATOR_0, x + relativeX, y + relativeY - 20);
+            } else if (playerRadiationPerSecond < 25) {
+                renderRadiationIndicator(guiGraphics, RADIATION_INDICATOR_1, x + relativeX, y + relativeY - 20);
+            } else if (playerRadiationPerSecond < 50) {
+                renderRadiationIndicator(guiGraphics, RADIATION_INDICATOR_2, x + relativeX, y + relativeY - 20);
+            } else if (playerRadiationPerSecond < 100) {
+                renderRadiationIndicator(guiGraphics, RADIATION_INDICATOR_3, x + relativeX, y + relativeY - 20);
+            } else if (playerRadiationPerSecond < 250) {
+                renderRadiationIndicator(guiGraphics, RADIATION_INDICATOR_4, x + relativeX, y + relativeY - 20);
+            } else if (playerRadiationPerSecond < 500) {
+                renderRadiationIndicator(guiGraphics, RADIATION_INDICATOR_5, x + relativeX, y + relativeY - 20);
+            } else if (playerRadiationPerSecond < 1000) {
+                renderRadiationIndicator(guiGraphics, RADIATION_INDICATOR_6, x + relativeX, y + relativeY - 20);
+            } else if (playerRadiationPerSecond < 2500) {
+                renderRadiationIndicator(guiGraphics, RADIATION_INDICATOR_7, x + relativeX, y + relativeY - 20);
+            } else if (playerRadiationPerSecond < 5000) {
+                renderRadiationIndicator(guiGraphics, RADIATION_INDICATOR_8, x + relativeX, y + relativeY - 20);
+            } else {
+                renderRadiationIndicator(guiGraphics, RADIATION_INDICATOR_9, x + relativeX, y + relativeY - 20);
+            }
+
+            guiGraphics.drawString(minecraft.font, radiation_per_second, x + relativeX + 22, y + relativeY + 3 - 18, 0xFFFFFF);
 
             int barLength = (int) Math.floor((double) freeSpace / 16);
             if (barLength < 2) return;
@@ -70,7 +125,7 @@ public class RadiationHudOverlay {
 
             int maxEntityRadiation = CommonConfig.DEADLY_RADIATION_DOSE;
             int playerRadiation = ClientRadiationData.getPlayerRadiation();
-            int playerRadiationPerSecond = ClientRadiationData.getPlayerRadiationPerSecond();
+
 
             float radiationPercentage = (float) playerRadiation / maxEntityRadiation * 100;
 
@@ -93,13 +148,13 @@ public class RadiationHudOverlay {
                 }
             }
 
-            String radiation_per_second = playerRadiationPerSecond + " RU/s";
+
             String current_radiation = playerRadiation + " RU";
-
-            //player.sendSystemMessage(Component.literal(radiation_per_second));
-
-            guiGraphics.drawString(minecraft.font, radiation_per_second, x + relativeX + 22 + 4, y + relativeY + 3 - 18, 0xFFFFFF);
             RenderHelper.drawTextField(guiGraphics, poseStack, current_radiation, x + relativeX + 22 + 4, y + relativeY + 3, barLength * 16 - 8, 16 - 4, 0xFFFFFF);
         }
     });
+
+    private static void renderRadiationIndicator(GuiGraphics guiGraphics, ResourceLocation resourceLocation, int x, int y) {
+        guiGraphics.blit(resourceLocation, x, y, 16, 16, 0, 0, 16, 16, 16,16);
+    }
 }
