@@ -99,6 +99,7 @@ public class ModEvents {
                                     entityRadiation.addRadiation(RadiationHelper.getInventoryRadiation(entityPlayer));
                                 }
 
+                                radiation = entityRadiation.getRadiation();
                                 int radiation_per_second = radiation - oldRadiation;
 
                                 entityRadiation.setRadiationPerSec(radiation_per_second);
