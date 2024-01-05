@@ -17,5 +17,8 @@
 
   "creativetab.nuclear_age_tab": "Create: Nukleares Zeitalter",
 
-  "effect.nuclearage.radiation": "Strahlung"
+  "effect.nuclearage.radiation": "Strahlung",
+
+  "death.attack.radiation": "%1$s starb an Strahlung",
+  "death.attack.radiation.player": "%1$s wurde von Strahlung getötet, während er versuchte, %2$s zu entkommen"
 }

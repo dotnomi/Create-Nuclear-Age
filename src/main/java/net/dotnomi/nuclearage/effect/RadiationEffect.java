@@ -1,5 +1,14 @@
 package net.dotnomi.nuclearage.effect;
 
+import com.simibubi.create.foundation.damageTypes.DamageTypeBuilder;
+import net.dotnomi.nuclearage.effect.damagesource.RadiationDamageSource;
+import net.dotnomi.nuclearage.effect.damagetype.ModDamageTypes;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.damagesource.DamageScaling;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,11 +31,24 @@ public class RadiationEffect extends MobEffect {
         float stageAmplifier = 0;
 
         if (tickTimer % 5 == 0) {
-                        if (pAmplifier == 0) stageAmplifier = stageOneAmplifier;
+            DamageType damageType = new DamageTypeBuilder(DamageTypes.GENERIC).msgId("radiation").build();
+            DamageType killDamageType = new DamageTypeBuilder(DamageTypes.GENERIC_KILL).msgId("radiation.player").build();
+
+            DamageSource damageSource = new DamageSource(Holder.direct(damageType));
+
+            if (pLivingEntity instanceof Player player) {
+                if (pLivingEntity.getLastAttacker() != null && player.getHealth() <= 1) {
+                    damageSource = new DamageSource(Holder.direct(killDamageType), pLivingEntity.getLastAttacker());
+                } else {
+                    damageSource = new DamageSource(Holder.direct(damageType));
+                }
+            }
+
+            if (pAmplifier == 0) stageAmplifier = stageOneAmplifier;
             else if (pAmplifier == 1) stageAmplifier = stageTwoAmplifier;
             else if (pAmplifier >= 2) stageAmplifier = stageThreeAmplifier;
             if (pLivingEntity instanceof Player player) player.causeFoodExhaustion(stageAmplifier);
-            pLivingEntity.hurt(pLivingEntity.damageSources().magic(), stageAmplifier * 2);
+            pLivingEntity.hurt(damageSource, stageAmplifier * 2);
 
             tickTimer = 0;
         }

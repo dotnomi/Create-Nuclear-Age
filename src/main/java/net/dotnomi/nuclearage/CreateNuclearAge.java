@@ -8,6 +8,7 @@ import net.dotnomi.nuclearage.event.ModEvents;
 import net.dotnomi.nuclearage.item.ModCreativeModeTabs;
 import net.dotnomi.nuclearage.item.ModItems;
 import net.dotnomi.nuclearage.networking.ModMessages;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
@@ -56,10 +57,12 @@ public class CreateNuclearAge
     {
         event.enqueueWork(ModMessages::register);
 
-        CommonConfig.RADIOACTIVE_BLOCKS.forEach((block) -> LOGGER.info("ITEM >> {} / {}", block.getBlock().toString(), block.getRadiation()));
+        LOGGER.info("CANDIS >> {}",CommonConfig.RADIOACTIVE_ITEMS.getOrDefault(Items.ACACIA_CHEST_BOAT, 0));
+
+        CommonConfig.RADIOACTIVE_BLOCKS.forEach((block, radiation) -> LOGGER.info("RADIOACTIVE BLOCK >> {} / {}", block.toString(), radiation));
 
 
-        CommonConfig.RADIOACTIVE_ITEMS.forEach((item, rad) -> LOGGER.info("ITEM >> {} / {}", item.toString(), rad));
+        CommonConfig.RADIOACTIVE_ITEMS.forEach((item, radiation) -> LOGGER.info("RADIOACTIVE ITEM >> {} / {}", item.toString(), radiation));
     }
 
     // Add the example block item to the building blocks tab

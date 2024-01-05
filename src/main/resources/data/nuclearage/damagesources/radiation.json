@@ -1,0 +1,5 @@
+{
+  "translation_key": "death.attack.radiation",
+  "damage_type": "radiation",
+  "sound": "minecraft:entity.player.hurt"
+}

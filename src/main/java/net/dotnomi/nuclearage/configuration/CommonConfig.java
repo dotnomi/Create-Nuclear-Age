@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Set;
 
 public class CommonConfig {
-    public static Set<RadiatedBlock> RADIOACTIVE_BLOCKS;
+    public static HashMap<Block, Integer> RADIOACTIVE_BLOCKS;
     public static HashMap<Item, Integer> RADIOACTIVE_ITEMS;
+
+    public static int DEADLY_RADIATION_DOSE;
 }

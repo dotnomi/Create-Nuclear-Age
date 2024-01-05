@@ -3,6 +3,7 @@ package net.dotnomi.nuclearage.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.dotnomi.nuclearage.CreateNuclearAge;
+import net.dotnomi.nuclearage.configuration.CommonConfig;
 import net.dotnomi.nuclearage.item.ModItems;
 import net.dotnomi.nuclearage.util.RenderHelper;
 import net.minecraft.client.Minecraft;
@@ -65,7 +66,7 @@ public class RadiationHudOverlay {
                 }
             }
 
-            int maxEntityRadiation = 100000;
+            int maxEntityRadiation = CommonConfig.DEADLY_RADIATION_DOSE;
             int playerRadiation = ClientRadiationData.getPlayerRadiation();
 
             float radiationPercentage = (float) playerRadiation / maxEntityRadiation * 100;

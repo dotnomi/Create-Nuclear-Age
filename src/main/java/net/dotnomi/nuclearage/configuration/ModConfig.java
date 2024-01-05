@@ -44,7 +44,7 @@ public class ModConfig {
 
     private static final ForgeConfigSpec.Builder COMMON_BUILDER = new ForgeConfigSpec.Builder();
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RADIOACTIVE_BLOCK_STRINGS = COMMON_BUILDER
-            .comment("List of all radioactive blocks.")
+            .comment("List of all radioactive blocks. <block;radiation>")
             .defineListAllowEmpty("radioactivity.blocks", List.of(
                     "nuclearage:radiocalcite_block;20",
                     "nuclearage:radionite_block;15",
@@ -54,7 +54,7 @@ public class ModConfig {
                     "nuclearage:radiotuffite_block;18"
                     ), ModConfig::validateBlockName);
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RADIOACTIVE_ITEM_STRINGS = COMMON_BUILDER
-            .comment("List of all radioactive items.")
+            .comment("List of all radioactive items. <item;radiation>")
             .defineListAllowEmpty("radioactivity.items", List.of(
                     "nuclearage:radiocalcite;18",
                     "nuclearage:radionite;13",
@@ -63,6 +63,9 @@ public class ModConfig {
                     "nuclearage:radiosite;6",
                     "nuclearage:radiotuffite;16"
             ), ModConfig::validateItemName);
+
+    private static final ForgeConfigSpec.ConfigValue<? extends Integer> DEADLY_RADIATION_DOSE = COMMON_BUILDER
+            .defineInRange("radioactivity.deadly_dose", 1000000, 0, 1000000000);
     public static final ForgeConfigSpec COMMON_CONFIG = COMMON_BUILDER.build();
 
     @SubscribeEvent
@@ -73,22 +76,9 @@ public class ModConfig {
         }
 
         if (COMMON_CONFIG.isLoaded()) {
-            CommonConfig.RADIOACTIVE_BLOCKS = RADIOACTIVE_BLOCK_STRINGS.get().stream()
-                    .map(blockEntry -> {
-                        String[] parameters = blockEntry.split(";");
-                        if (parameters.length < 2) return null;
-
-                        if (validateBlockName(parameters[0])) {
-                            Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(parameters[0]));
-                            int radiationUnitsPerTick = Math.max(Integer.parseInt(parameters[1]), 0);
-                            return new RadiatedBlock(block, radiationUnitsPerTick);
-                        }
-                        return null;
-                    }).collect(Collectors.toSet());
-
             CommonConfig.RADIOACTIVE_ITEMS = (HashMap<Item, Integer>) RADIOACTIVE_ITEM_STRINGS.get().stream()
-                    .map(blockEntry -> {
-                        String[] parameters = blockEntry.split(";");
+                    .map(itemEntry -> {
+                        String[] parameters = itemEntry.split(";");
                         if (parameters.length < 2) return null;
 
                         if (validateItemName(parameters[0])) {
@@ -98,17 +88,34 @@ public class ModConfig {
                         }
                         return null;
                     }).collect(Collectors.toMap(RadiatedItem::getItem, RadiatedItem::getRadiation));
+
+            CommonConfig.RADIOACTIVE_BLOCKS = (HashMap<Block, Integer>) RADIOACTIVE_BLOCK_STRINGS.get().stream()
+                    .map(blockEntry -> {
+                        String[] parameters = blockEntry.split(";");
+                        if (parameters.length < 2) return null;
+
+                        if (validateBlockName(parameters[0])) {
+                            Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(parameters[0]));
+                            int radiationUnitsPerTick = Math.max(Integer.parseInt(parameters[1]), 0);
+
+                            CommonConfig.RADIOACTIVE_ITEMS.put(block.asItem(), radiationUnitsPerTick);
+                            return new RadiatedBlock(block, radiationUnitsPerTick);
+                        }
+                        return null;
+                    }).collect(Collectors.toMap(RadiatedBlock::getBlock, RadiatedBlock::getRadiation));
+
+            CommonConfig.DEADLY_RADIATION_DOSE = DEADLY_RADIATION_DOSE.get();
         }
     }
 
     private static boolean validateItemName(final Object obj)
     {
-        return obj instanceof final String itemName && ForgeRegistries.ITEMS.containsKey(new ResourceLocation(itemName));
+        return obj instanceof final String itemEntry && ForgeRegistries.ITEMS.containsKey(new ResourceLocation(itemEntry.split(";")[0]));
     }
 
     private static boolean validateBlockName(final Object obj)
     {
-        return obj instanceof final String blockName && ForgeRegistries.BLOCKS.containsKey(new ResourceLocation(blockName));
+        return obj instanceof final String blockEntry && ForgeRegistries.BLOCKS.containsKey(new ResourceLocation(blockEntry.split(";")[0]));
     }
 
 }
