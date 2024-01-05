@@ -48,7 +48,7 @@ public class ModEvents {
 
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
-            if (event.getServer().getTickCount() % 20 == 0) {
+            if (event.getServer().getTickCount() % 20 == 0 && event.phase == TickEvent.Phase.START) {
                 radiationStage1 = new MobEffectInstance(ModEffects.RADIATION.get(), 20 * 30, 0);
                 radiationStage2 = new MobEffectInstance(ModEffects.RADIATION.get(), 20 * 30, 1);
                 radiationStage3 = new MobEffectInstance(ModEffects.RADIATION.get(), 20 * 30, 2);
@@ -72,21 +72,49 @@ public class ModEvents {
 
                     for (Entity entity : entities) {
                         if ((entity instanceof LivingEntity livingEntity)) {
-                            if (RadiationHelper.isNearRadiactiveItem(entity, world))
-                                livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(radiation -> {
-                                    radiation.addRadiation(RadiationHelper.getNearbyItemRadiation(entity, world, 12));
+                            /*if (RadiationHelper.isNearRadiactiveItem(entity, world))
+                                livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(entityRadiation -> {
+                                    entityRadiation.addRadiation(RadiationHelper.getNearbyItemRadiation(entity, world, 12));
                                 });
                             if (RadiationHelper.isNearRadioactiveBlock(entity, world))
-                                livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(radiation -> {
-                                    radiation.addRadiation(RadiationHelper.getNearbyBlockRadiation(entity, world, 12));
+                                livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(entityRadiation -> {
+                                    entityRadiation.addRadiation(RadiationHelper.getNearbyBlockRadiation(entity, world, 12));
                                 });
                             if (RadiationHelper.isNearRadioactiveContainer(entity, world))
-                                livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(radiation -> {
-                                    radiation.addRadiation(RadiationHelper.getNearbyContainerRadiation(entity, world, 12));
-                                });
+                                livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(entityRadiation -> {
+                                    entityRadiation.addRadiation(RadiationHelper.getNearbyContainerRadiation(entity, world, 12));
+                                });*/
+
+
 
                             livingEntity.getCapability(EntityRadiationProvider.ENTITY_RADIATION).ifPresent(entityRadiation -> {
+
+                                int oldRadiation = entityRadiation.getRadiation();
+
+                                if (RadiationHelper.isNearRadiactiveItem(entity, world)) {
+                                    int addedRadiation = RadiationHelper.getNearbyItemRadiation(entity, world, 12);
+                                    player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T ItemRads: " + addedRadiation));
+                                    entityRadiation.addRadiation(addedRadiation);
+                                }
+
+
+                                if (RadiationHelper.isNearRadioactiveBlock(entity, world)) {
+                                    int addedRadiation = RadiationHelper.getNearbyBlockRadiation(entity, world, 12);
+                                    player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T BlockRads: " + addedRadiation));
+                                    entityRadiation.addRadiation(addedRadiation);
+                                }
+
+
+                                if (RadiationHelper.isNearRadioactiveContainer(entity, world)){
+                                    int addedRadiation = RadiationHelper.getNearbyContainerRadiation(entity, world, 12);
+                                    player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T ContainerRads: " + addedRadiation));
+                                    entityRadiation.addRadiation(addedRadiation);
+                                }
+
                                 int radiation = entityRadiation.getRadiation();
+                                player.sendSystemMessage(Component.literal(event.getServer().getTickCount() + "T Rads per Sec: " + (radiation - oldRadiation) + " RU/s"));
+
+
 
                                 if (livingEntity instanceof Player)
                                     ModMessages.sendToPlayer(new RadiationDataSyncS2CPacket(radiation), player);
